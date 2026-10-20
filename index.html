@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -38,12 +39,6 @@
       font-family: Georgia, serif;
       font-size: clamp(35px, 8vw, 52px);
       color: #e2c27b;
-    }
-
-    .description {
-      color: #bdb5a5;
-      line-height: 1.9;
-      font-size: 14px;
     }
 
     button {
@@ -120,21 +115,15 @@
 
 <body>
   <main class="container">
-
     <div class="logo">PALM GOLD</div>
 
     <h1>Your Hands.<br>Your Story.</h1>
 
     <section class="card">
-      <h2>手相鑑定を申し込む</h2>
-
-      <p class="description">
-        手のひらを撮影して、<br>
-        鑑定を申し込めます。
-      </p>
+      <h2>手相占いする</h2>
 
       <button id="start" type="button">
-        📷 手相を鑑定する
+        📷 手相を占う
       </button>
 
       <video id="video" autoplay playsinline></video>
@@ -149,26 +138,20 @@
         撮り直す
       </button>
 
-      <label for="nickname">
-        ニックネーム（10文字以内・任意）
-      </label>
-
+      <label for="nickname">ニックネーム（10字以内）</label>
       <input
         id="nickname"
         type="text"
         maxlength="10"
-        placeholder="ニックネーム"
+        placeholder="ニックネームを入力"
       >
 
-      <label for="question">
-        相談内容（100文字以内・任意）
-      </label>
-
+      <label for="question">相談内容（100字以内）</label>
       <textarea
         id="question"
         rows="3"
         maxlength="100"
-        placeholder="知りたいことを入力（100文字以内）"
+        placeholder="相談内容を入力"
       ></textarea>
 
       <button id="send" type="button" disabled>
@@ -179,7 +162,6 @@
     </section>
 
     <footer>PALM GOLD · YOUR STORY</footer>
-
   </main>
 
   <script>
@@ -219,7 +201,7 @@
 
     start.addEventListener("click", async () => {
       try {
-        status.textContent = "カメラを起動しています…";
+        status.textContent = "";
 
         if (!navigator.mediaDevices?.getUserMedia) {
           throw new Error(
@@ -245,20 +227,17 @@
         video.style.display = "block";
         take.hidden = false;
 
-        status.textContent =
-          "手のひら全体が映るようにカメラを向けてください。";
+        status.textContent = "";
 
       } catch (error) {
         stopCamera();
-
-        status.textContent =
-          "カメラを起動できませんでした。\n" + error.message;
+        status.textContent = "";
       }
     });
 
     take.addEventListener("click", () => {
       if (!video.videoWidth) {
-        status.textContent = "カメラの準備ができていません。";
+        status.textContent = "";
         return;
       }
 
@@ -266,22 +245,18 @@
       canvas.height = video.videoHeight;
 
       canvas.getContext("2d").drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
+        video, 0, 0, canvas.width, canvas.height
       );
 
       canvas.toBlob(blob => {
         if (!blob) {
-          status.textContent = "写真を撮影できませんでした。";
+          status.textContent = "";
           return;
         }
 
         photo = blob;
-
         clearPreview();
+
         previewUrl = URL.createObjectURL(blob);
         preview.src = previewUrl;
         preview.style.display = "block";
@@ -293,8 +268,7 @@
 
         stopCamera();
 
-        status.textContent =
-          "写真を確認してから、送信ボタンを押してください。";
+        status.textContent = "";
       }, "image/jpeg", 0.9);
     });
 
@@ -308,25 +282,24 @@
 
     send.addEventListener("click", async () => {
       if (!photo) {
-        status.textContent = "先に手の写真を撮影してください。";
+        status.textContent = "";
         return;
       }
 
       if (nickname.value.length > 10) {
-        status.textContent = "ニックネームは10文字以内にしてください。";
+        status.textContent = "ニックネームは10字以内にしてください。";
         return;
       }
 
       if (question.value.length > 100) {
-        status.textContent = "相談内容は100文字以内にしてください。";
+        status.textContent = "相談内容は100字以内にしてください。";
         return;
       }
 
       send.disabled = true;
-      status.textContent = "送信しています…";
+      status.textContent = "";
 
       const form = new FormData();
-
       form.append("photo", photo, "palm.jpg");
       form.append("nickname", nickname.value);
       form.append("question", question.value);
@@ -345,14 +318,10 @@
           );
         }
 
-        status.textContent =
-          "送信完了！鑑定をお待ちください。";
+        status.textContent = "";
 
       } catch (error) {
-        status.textContent =
-          "送信できませんでした。\n" +
-          "Telegram送信用のサーバー設定が必要です。";
-
+        status.textContent = "";
         send.disabled = false;
       }
     });
@@ -361,3 +330,4 @@
   </script>
 </body>
 </html>
+```
