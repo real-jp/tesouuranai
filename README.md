@@ -40,12 +40,6 @@
       color: #e2c27b;
     }
 
-    .description {
-      color: #bdb5a5;
-      line-height: 1.9;
-      font-size: 14px;
-    }
-
     button {
       width: 100%;
       padding: 16px;
@@ -120,21 +114,15 @@
 
 <body>
   <main class="container">
-
     <div class="logo">PALM GOLD</div>
 
     <h1>Your Hands.<br>Your Story.</h1>
 
     <section class="card">
-      <h2>手相鑑定を申し込む</h2>
-
-      <p class="description">
-        手のひらを撮影して、<br>
-        鑑定を申し込めます。
-      </p>
+      <h2>手相占いする</h2>
 
       <button id="start" type="button">
-        📷 手相を鑑定する
+        📷 手相を占う
       </button>
 
       <video id="video" autoplay playsinline></video>
@@ -149,26 +137,20 @@
         撮り直す
       </button>
 
-      <label for="nickname">
-        ニックネーム（10文字以内・任意）
-      </label>
-
+      <label for="nickname">ニックネーム（10字以内）</label>
       <input
         id="nickname"
         type="text"
         maxlength="10"
-        placeholder="ニックネーム"
+        placeholder="ニックネームを入力"
       >
 
-      <label for="question">
-        相談内容（100文字以内・任意）
-      </label>
-
+      <label for="question">相談内容（100字以内）</label>
       <textarea
         id="question"
         rows="3"
         maxlength="100"
-        placeholder="知りたいことを入力（100文字以内）"
+        placeholder="相談内容を入力"
       ></textarea>
 
       <button id="send" type="button" disabled>
@@ -179,7 +161,6 @@
     </section>
 
     <footer>PALM GOLD · YOUR STORY</footer>
-
   </main>
 
   <script>
@@ -222,9 +203,7 @@
         status.textContent = "カメラを起動しています…";
 
         if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error(
-            "カメラを使うにはHTTPS対応のサイトで開いてください。"
-          );
+          throw new Error();
         }
 
         stopCamera();
@@ -250,9 +229,8 @@
 
       } catch (error) {
         stopCamera();
-
         status.textContent =
-          "カメラを起動できませんでした。\n" + error.message;
+          "カメラを起動できませんでした。\nブラウザのカメラ権限が許可されているか、HTTPS接続になっているかご確認ください。";
       }
     });
 
@@ -266,11 +244,7 @@
       canvas.height = video.videoHeight;
 
       canvas.getContext("2d").drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
+        video, 0, 0, canvas.width, canvas.height
       );
 
       canvas.toBlob(blob => {
@@ -280,8 +254,8 @@
         }
 
         photo = blob;
-
         clearPreview();
+
         previewUrl = URL.createObjectURL(blob);
         preview.src = previewUrl;
         preview.style.display = "block";
@@ -313,12 +287,12 @@
       }
 
       if (nickname.value.length > 10) {
-        status.textContent = "ニックネームは10文字以内にしてください。";
+        status.textContent = "ニックネームは10字以内にしてください。";
         return;
       }
 
       if (question.value.length > 100) {
-        status.textContent = "相談内容は100文字以内にしてください。";
+        status.textContent = "相談内容は100字以内にしてください。";
         return;
       }
 
@@ -326,7 +300,6 @@
       status.textContent = "送信しています…";
 
       const form = new FormData();
-
       form.append("photo", photo, "palm.jpg");
       form.append("nickname", nickname.value);
       form.append("question", question.value);
