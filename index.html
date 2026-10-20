@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b0b0b">
   <title>PALM GOLD</title>
-
   <style>
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       padding: 20px 20px 40px;
@@ -17,13 +15,11 @@
       font-family: Arial, sans-serif;
       text-align: center;
     }
-
     .container {
       max-width: 600px;
       margin: 0 auto;
       padding-bottom: 20px;
     }
-
     .logo {
       color: #d8b56a;
       letter-spacing: 5px;
@@ -31,14 +27,12 @@
       font-weight: bold;
       margin-top: 25px;
     }
-
     h1 {
       margin-top: 55px;
       font-family: Georgia, serif;
       font-size: clamp(35px, 8vw, 52px);
       color: #e2c27b;
     }
-
     button {
       width: 100%;
       padding: 16px;
@@ -51,12 +45,10 @@
       font-weight: bold;
       cursor: pointer;
     }
-
     button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-
     .card {
       margin-top: 35px;
       padding: 22px;
@@ -64,15 +56,48 @@
       border-radius: 18px;
       background: #151515;
     }
-
-    video, #preview {
+    .camera-frame {
+      display: none;
+      width: 100%;
+      margin-top: 20px;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #000;
+      position: relative;
+    }
+    #video {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+      border-radius: 0;
+      background: #000;
+      transform-origin: center center;
+    }
+    #preview {
       display: none;
       width: 100%;
       margin-top: 20px;
       border-radius: 12px;
       background: #000;
     }
-
+    .zoom-controls {
+      display: none;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+    }
+    .zoom-controls button {
+      margin-top: 0;
+      padding: 12px 8px;
+      font-size: 15px;
+    }
+    .zoom-label {
+      color: #d8b56a;
+      font-size: 13px;
+      white-space: nowrap;
+    }
     input, textarea {
       display: block;
       width: 100%;
@@ -83,8 +108,11 @@
       border-radius: 8px;
       color: white;
       font-size: 15px;
+      font-family: Arial, sans-serif;
     }
-
+    textarea {
+      resize: none;
+    }
     label {
       display: block;
       text-align: left;
@@ -92,7 +120,6 @@
       color: #d8b56a;
       font-size: 13px;
     }
-
     #status {
       margin-top: 15px;
       color: #d8b56a;
@@ -100,7 +127,6 @@
       line-height: 1.7;
       white-space: pre-wrap;
     }
-
     footer {
       margin-top: 45px;
       padding: 15px 0 10px;
@@ -111,52 +137,52 @@
     }
   </style>
 </head>
-
 <body>
   <main class="container">
     <div class="logo">PALM GOLD</div>
     <h1>Your Hands.<br>Your Story.</h1>
-
-    <section class="card">
-      <h2>手相占いする</h2>
-
-      <button id="start" type="button">📷 手相を占う</button>
-
-      <video id="video" autoplay playsinline></video>
-      <canvas id="canvas" hidden></canvas>
-      <img id="preview" alt="撮影した手の写真">
-
-      <button id="take" type="button" hidden>写真を撮る</button>
-      <button id="retake" type="button" hidden>撮り直す</button>
-
-      <label for="nickname">ニックネーム（10字以内）</label>
-      <input
-        id="nickname"
-        type="text"
-        maxlength="10"
-        placeholder="ニックネームを入力"
-      >
-
-      <label for="question">相談内容（100字以内）</label>
-      <textarea
-        id="question"
-        rows="3"
-        maxlength="100"
-        placeholder="相談内容を入力"
-      ></textarea>
-
-      <button id="send" type="button" disabled>Telegramに送信する →</button>
-
-      <div id="status" role="status" aria-live="polite"></div>
-    </section>
-
-    <footer>PALM GOLD · YOUR STORY</footer>
+<section class="card">
+  <h2>手相占いする</h2>
+  <button id="start" type="button">📷 手相を占う</button>
+  <div class="camera-frame" id="cameraFrame">
+    <video id="video" autoplay playsinline></video>
+  </div>
+  <div class="zoom-controls" id="zoomControls">
+    <button id="zoomOut" type="button">− 縮小</button>
+    <span class="zoom-label" id="zoomLabel">1.0x</span>
+    <button id="zoomIn" type="button">＋ 拡大</button>
+  </div>
+  <canvas id="canvas" hidden></canvas>
+  <img id="preview" alt="撮影した手の写真">
+  <button id="take" type="button" hidden>写真を撮る</button>
+  <button id="retake" type="button" hidden>撮り直す</button>
+  <label for="nickname">ニックネーム（10字以内）</label>
+  <input
+    id="nickname"
+    type="text"
+    autocomplete="off"
+    placeholder="ニックネームを入力"
+  >
+  <label for="question">相談内容（100字以内）</label>
+  <textarea
+    id="question"
+    rows="3"
+    placeholder="相談内容を入力"
+  ></textarea>
+  <button id="send" type="button" disabled>Telegramに送信する →</button>
+  <div id="status" role="status" aria-live="polite"></div>
+</section>
+<footer>PALM GOLD · YOUR STORY</footer>
   </main>
-
   <script>
     const video = document.getElementById("video");
     const canvas = document.getElementById("canvas");
     const preview = document.getElementById("preview");
+    const cameraFrame = document.getElementById("cameraFrame");
+    const zoomControls = document.getElementById("zoomControls");
+    const zoomLabel = document.getElementById("zoomLabel");
+    const zoomIn = document.getElementById("zoomIn");
+    const zoomOut = document.getElementById("zoomOut");
     const start = document.getElementById("start");
     const take = document.getElementById("take");
     const retake = document.getElementById("retake");
@@ -164,24 +190,60 @@
     const status = document.getElementById("status");
     const nickname = document.getElementById("nickname");
     const question = document.getElementById("question");
-
+    const NICKNAME_LIMIT = 10;
+    const QUESTION_LIMIT = 100;
+    const MIN_ZOOM = 1;
+    const MAX_ZOOM = 3;
+    const ZOOM_STEP = 0.25;
     let stream = null;
     let photo = null;
     let previewUrl = null;
-
-    // 文字数制限
-    nickname.addEventListener("input", () => {
-      if (nickname.value.length > 10) {
-        nickname.value = nickname.value.slice(0, 10);
+    let zoomLevel = 1;
+    let nicknameComposing = false;
+    let questionComposing = false;
+    // 絵文字なども1文字として数えて、入力超過を防ぐ
+    function limitCharacters(input, maxLength) {
+      const characters = Array.from(input.value);
+      if (characters.length > maxLength) {
+        const cursor = input.selectionStart;
+        input.value = characters.slice(0, maxLength).join("");
+        if (cursor !== null) {
+          const newCursor = Math.min(
+            cursor,
+            input.value.length
+          );
+          input.setSelectionRange(newCursor, newCursor);
+        }
       }
-    });
-
-    question.addEventListener("input", () => {
-      if (question.value.length > 100) {
-        question.value = question.value.slice(0, 100);
-      }
-    });
-
+    }
+    function setupCharacterLimit(input, maxLength, composingState) {
+      input.addEventListener("compositionstart", () => {
+        if (composingState === "nickname") {
+          nicknameComposing = true;
+        } else {
+          questionComposing = true;
+        }
+      });
+      input.addEventListener("compositionend", () => {
+        if (composingState === "nickname") {
+          nicknameComposing = false;
+        } else {
+          questionComposing = false;
+        }
+        limitCharacters(input, maxLength);
+      });
+      input.addEventListener("input", () => {
+        const composing =
+          composingState === "nickname"
+            ? nicknameComposing
+            : questionComposing;
+        if (!composing) {
+          limitCharacters(input, maxLength);
+        }
+      });
+    }
+    setupCharacterLimit(nickname, NICKNAME_LIMIT, "nickname");
+    setupCharacterLimit(question, QUESTION_LIMIT, "question");
     function stopCamera() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -189,7 +251,6 @@
       }
       video.srcObject = null;
     }
-
     function clearPreview() {
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
@@ -198,71 +259,99 @@
       preview.removeAttribute("src");
       preview.style.display = "none";
     }
-
+    function updateZoom() {
+      video.style.transform = `scale(${zoomLevel})`;
+      zoomLabel.textContent = `${zoomLevel.toFixed(2).replace(/0$/, "").replace(/\.$/, "")}x`;
+      zoomOut.disabled = zoomLevel <= MIN_ZOOM;
+      zoomIn.disabled = zoomLevel >= MAX_ZOOM;
+    }
+    function changeZoom(amount) {
+      zoomLevel = Math.max(
+        MIN_ZOOM,
+        Math.min(MAX_ZOOM, Math.round((zoomLevel + amount) * 100) / 100)
+      );
+      updateZoom();
+    }
+    zoomIn.addEventListener("click", () => {
+      changeZoom(ZOOM_STEP);
+    });
+    zoomOut.addEventListener("click", () => {
+      changeZoom(-ZOOM_STEP);
+    });
     start.addEventListener("click", async () => {
       try {
         status.textContent = "";
-
         if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error();
+          throw new Error("カメラを利用できません。HTTPSで開いてください。");
         }
-
         stopCamera();
         clearPreview();
         photo = null;
+        zoomLevel = 1;
+        updateZoom();
         send.disabled = true;
+        take.hidden = true;
         retake.hidden = true;
-
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
+          video: {
+            facingMode: { ideal: "environment" }
+          },
           audio: false
         });
-
         video.srcObject = stream;
-        video.style.display = "block";
+        cameraFrame.style.display = "block";
+        zoomControls.style.display = "grid";
         take.hidden = false;
+        await video.play();
       } catch (error) {
         stopCamera();
+        cameraFrame.style.display = "none";
+        zoomControls.style.display = "none";
         status.textContent = "";
       }
     });
-
     take.addEventListener("click", () => {
-      if (!video.videoWidth) {
+      if (!video.videoWidth || !video.videoHeight) {
         status.textContent = "";
         return;
       }
-
+      const sourceWidth = video.videoWidth / zoomLevel;
+      const sourceHeight = video.videoHeight / zoomLevel;
+      const sourceX = (video.videoWidth - sourceWidth) / 2;
+      const sourceY = (video.videoHeight - sourceHeight) / 2;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-
-      canvas.getContext("2d").drawImage(
-        video, 0, 0, canvas.width, canvas.height
+      const context = canvas.getContext("2d");
+      context.drawImage(
+        video,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height
       );
-
       canvas.toBlob(blob => {
         if (!blob) {
           status.textContent = "";
           return;
         }
-
         photo = blob;
         clearPreview();
-
         previewUrl = URL.createObjectURL(blob);
         preview.src = previewUrl;
         preview.style.display = "block";
-
-        video.style.display = "none";
+        cameraFrame.style.display = "none";
+        zoomControls.style.display = "none";
         take.hidden = true;
         retake.hidden = false;
         send.disabled = false;
-
         stopCamera();
         status.textContent = "";
       }, "image/jpeg", 0.9);
     });
-
     retake.addEventListener("click", () => {
       photo = null;
       send.disabled = true;
@@ -270,48 +359,40 @@
       clearPreview();
       start.click();
     });
-
     send.addEventListener("click", async () => {
+      limitCharacters(nickname, NICKNAME_LIMIT);
+      limitCharacters(question, QUESTION_LIMIT);
       if (!photo) {
         status.textContent = "";
         return;
       }
-
-      if (nickname.value.length > 10) {
-        nickname.value = nickname.value.slice(0, 10);
-      }
-
-      if (question.value.length > 100) {
-        question.value = question.value.slice(0, 100);
-      }
-
       send.disabled = true;
       status.textContent = "";
-
       const form = new FormData();
       form.append("photo", photo, "palm.jpg");
       form.append("nickname", nickname.value);
       form.append("question", question.value);
-
       try {
         const response = await fetch("/api/send", {
           method: "POST",
           body: form
         });
-
-        const result = await response.json();
-
+        let result = {};
+        try {
+          result = await response.json();
+        } catch (error) {
+          result = {};
+        }
         if (!response.ok) {
           throw new Error(result.error || "送信に失敗しました。");
         }
-
         status.textContent = "";
       } catch (error) {
         status.textContent = "";
         send.disabled = false;
       }
     });
-
+    updateZoom();
     window.addEventListener("pagehide", stopCamera);
   </script>
 </body>
