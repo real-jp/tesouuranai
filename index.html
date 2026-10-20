@@ -68,7 +68,6 @@
       display: block;
       width: 100%;
       height: auto;
-      margin: 0;
       background: #000;
     }
     #preview {
@@ -120,7 +119,6 @@
       color: #756b58;
       font-size: 11px;
       line-height: 1.8;
-      clear: both;
     }
   </style>
 </head>
@@ -174,8 +172,6 @@
     const question = document.getElementById("question");
     const nicknameCount = document.getElementById("nicknameCount");
     const questionCount = document.getElementById("questionCount");
-    const NICKNAME_LIMIT = 10;
-    const QUESTION_LIMIT = 100;
     let stream = null;
     let photo = null;
     let previewUrl = null;
@@ -183,22 +179,17 @@
     function limitCharacters(input, maxLength, counter) {
       const chars = Array.from(input.value);
       if (chars.length > maxLength) {
-        const cursor = input.selectionStart;
         const limitedValue = chars.slice(0, maxLength).join("");
         input.value = limitedValue;
-        if (cursor !== null) {
-          const newCursor = Math.min(cursor, limitedValue.length);
-          input.setSelectionRange(newCursor, newCursor);
-        }
       }
       counter.textContent =
         `${Array.from(input.value).length} / ${maxLength}`;
     }
     function handleNicknameInput() {
-      limitCharacters(nickname, NICKNAME_LIMIT, nicknameCount);
+      limitCharacters(nickname, 10, nicknameCount);
     }
     function handleQuestionInput() {
-      limitCharacters(question, QUESTION_LIMIT, questionCount);
+      limitCharacters(question, 100, questionCount);
     }
     nickname.addEventListener("input", handleNicknameInput);
     question.addEventListener("input", handleQuestionInput);
@@ -219,9 +210,10 @@
       preview.removeAttribute("src");
       preview.style.display = "none";
     }
-    // カメラ起動中に再度押しても何もしない
+    // カメラを1つだけ起動する
     start.addEventListener("click", async () => {
-      if (stream || cameraStarting) return;
+      // 起動中・起動済み・撮影済みなら何もしない
+      if (stream || cameraStarting || photo) return;
       status.textContent = "";
       if (!navigator.mediaDevices ||
           !navigator.mediaDevices.getUserMedia) {
@@ -231,16 +223,26 @@
       }
       cameraStarting = true;
       start.disabled = true;
+      let newStream = null;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
+        newStream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: "environment" } },
           audio: false
         });
+        // 起動処理中に撮影済みになった場合は新しいカメラを閉じる
+        if (photo) {
+          newStream.getTracks().forEach(track => track.stop());
+          return;
+        }
+        stream = newStream;
         video.srcObject = stream;
         cameraFrame.style.display = "block";
         await video.play();
         take.hidden = false;
       } catch (error) {
+        if (newStream) {
+          newStream.getTracks().forEach(track => track.stop());
+        }
         stopCamera();
         cameraFrame.style.display = "none";
         status.textContent =
@@ -252,9 +254,9 @@
         start.disabled = false;
       }
     });
-    // 写真撮影
+    // 写真を撮影したらカメラを停止
     take.addEventListener("click", () => {
-      if (!video.videoWidth || !video.videoHeight) {
+      if (!stream || !video.videoWidth || !video.videoHeight) {
         status.textContent = "カメラの準備ができていません。";
         return;
       }
@@ -262,7 +264,9 @@
       canvas.height = video.videoHeight;
       const context = canvas.getContext("2d");
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      take.disabled = true;
       canvas.toBlob(blob => {
+        take.disabled = false;
         if (!blob) {
           status.textContent = "写真を撮影できませんでした。";
           return;
@@ -280,17 +284,16 @@
         status.textContent = "";
       }, "image/jpeg", 0.9);
     });
-    // 撮り直し
+    // 撮り直すときだけ、写真を解除してカメラを再起動
     retake.addEventListener("click", () => {
+      if (cameraStarting) return;
       photo = null;
       send.disabled = true;
       retake.hidden = true;
       clearPreview();
-      if (!stream) {
-        start.click();
-      }
+      start.click();
     });
-    // Telegram送信
+    // 送信
     send.addEventListener("click", async () => {
       handleNicknameInput();
       handleQuestionInput();
