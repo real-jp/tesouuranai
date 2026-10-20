@@ -63,14 +63,12 @@
       overflow: hidden;
       border-radius: 12px;
       background: #000;
-      position: relative;
     }
     #video {
       display: block;
       width: 100%;
       height: auto;
       margin: 0;
-      border-radius: 0;
       background: #000;
       transform-origin: center center;
     }
@@ -112,6 +110,7 @@
     }
     textarea {
       resize: none;
+      overflow-y: auto;
     }
     label {
       display: block;
@@ -119,6 +118,12 @@
       margin-top: 20px;
       color: #d8b56a;
       font-size: 13px;
+    }
+    .character-count {
+      margin-top: 6px;
+      color: #a99a7d;
+      font-size: 12px;
+      text-align: right;
     }
     #status {
       margin-top: 15px;
@@ -141,38 +146,42 @@
   <main class="container">
     <div class="logo">PALM GOLD</div>
     <h1>Your Hands.<br>Your Story.</h1>
-<section class="card">
-  <h2>手相占いする</h2>
-  <button id="start" type="button">📷 手相を占う</button>
-  <div class="camera-frame" id="cameraFrame">
-    <video id="video" autoplay playsinline></video>
-  </div>
-  <div class="zoom-controls" id="zoomControls">
-    <button id="zoomOut" type="button">− 縮小</button>
-    <span class="zoom-label" id="zoomLabel">1.0x</span>
-    <button id="zoomIn" type="button">＋ 拡大</button>
-  </div>
-  <canvas id="canvas" hidden></canvas>
-  <img id="preview" alt="撮影した手の写真">
-  <button id="take" type="button" hidden>写真を撮る</button>
-  <button id="retake" type="button" hidden>撮り直す</button>
-  <label for="nickname">ニックネーム（10字以内）</label>
-  <input
-    id="nickname"
-    type="text"
-    autocomplete="off"
-    placeholder="ニックネームを入力"
-  >
-  <label for="question">相談内容（100字以内）</label>
-  <textarea
-    id="question"
-    rows="3"
-    placeholder="相談内容を入力"
-  ></textarea>
-  <button id="send" type="button" disabled>Telegramに送信する →</button>
-  <div id="status" role="status" aria-live="polite"></div>
-</section>
-<footer>PALM GOLD · YOUR STORY</footer>
+    <section class="card">
+      <h2>手相占いする</h2>
+      <button id="start" type="button">📸 写真を撮る</button>
+      <div class="camera-frame" id="cameraFrame">
+        <video id="video" autoplay playsinline></video>
+      </div>
+      <div class="zoom-controls" id="zoomControls">
+        <button id="zoomOut" type="button">− 縮小</button>
+        <span class="zoom-label" id="zoomLabel">1x</span>
+        <button id="zoomIn" type="button">＋ 拡大</button>
+      </div>
+      <canvas id="canvas" hidden></canvas>
+      <img id="preview" alt="撮影した手の写真">
+      <button id="take" type="button" hidden>写真を撮る</button>
+      <button id="retake" type="button" hidden>撮り直す</button>
+      <label for="nickname">ニックネーム（10字以内）</label>
+      <input
+        id="nickname"
+        type="text"
+        maxlength="10"
+        autocomplete="off"
+        placeholder="ニックネームを入力"
+      >
+      <div class="character-count" id="nicknameCount">0 / 10</div>
+      <label for="question">相談内容（100字以内）</label>
+      <textarea
+        id="question"
+        rows="3"
+        maxlength="100"
+        placeholder="相談内容を入力"
+      ></textarea>
+      <div class="character-count" id="questionCount">0 / 100</div>
+      <button id="send" type="button" disabled>Telegramに送信する →</button>
+      <div id="status" role="status" aria-live="polite"></div>
+    </section>
+    <footer>PALM GOLD · YOUR STORY</footer>
   </main>
   <script>
     const video = document.getElementById("video");
@@ -181,8 +190,6 @@
     const cameraFrame = document.getElementById("cameraFrame");
     const zoomControls = document.getElementById("zoomControls");
     const zoomLabel = document.getElementById("zoomLabel");
-    const zoomIn = document.getElementById("zoomIn");
-    const zoomOut = document.getElementById("zoomOut");
     const start = document.getElementById("start");
     const take = document.getElementById("take");
     const retake = document.getElementById("retake");
@@ -190,6 +197,10 @@
     const status = document.getElementById("status");
     const nickname = document.getElementById("nickname");
     const question = document.getElementById("question");
+    const nicknameCount = document.getElementById("nicknameCount");
+    const questionCount = document.getElementById("questionCount");
+    const zoomIn = document.getElementById("zoomIn");
+    const zoomOut = document.getElementById("zoomOut");
     const NICKNAME_LIMIT = 10;
     const QUESTION_LIMIT = 100;
     const MIN_ZOOM = 1;
@@ -199,51 +210,39 @@
     let photo = null;
     let previewUrl = null;
     let zoomLevel = 1;
-    let nicknameComposing = false;
-    let questionComposing = false;
-    // 絵文字なども1文字として数えて、入力超過を防ぐ
-    function limitCharacters(input, maxLength) {
-      const characters = Array.from(input.value);
-      if (characters.length > maxLength) {
+    let cameraStarting = false;
+    // 文字数制限とカウンター更新
+    function limitCharacters(input, maxLength, counter) {
+      const chars = Array.from(input.value);
+      if (chars.length > maxLength) {
         const cursor = input.selectionStart;
-        input.value = characters.slice(0, maxLength).join("");
+        const limitedValue = chars.slice(0, maxLength).join("");
+        input.value = limitedValue;
         if (cursor !== null) {
-          const newCursor = Math.min(
-            cursor,
-            input.value.length
-          );
+          const newCursor = Math.min(cursor, limitedValue.length);
           input.setSelectionRange(newCursor, newCursor);
         }
       }
+      counter.textContent =
+        `${Array.from(input.value).length} / ${maxLength}`;
     }
-    function setupCharacterLimit(input, maxLength, composingState) {
-      input.addEventListener("compositionstart", () => {
-        if (composingState === "nickname") {
-          nicknameComposing = true;
-        } else {
-          questionComposing = true;
-        }
-      });
-      input.addEventListener("compositionend", () => {
-        if (composingState === "nickname") {
-          nicknameComposing = false;
-        } else {
-          questionComposing = false;
-        }
-        limitCharacters(input, maxLength);
-      });
-      input.addEventListener("input", () => {
-        const composing =
-          composingState === "nickname"
-            ? nicknameComposing
-            : questionComposing;
-        if (!composing) {
-          limitCharacters(input, maxLength);
-        }
-      });
+    function handleNicknameInput() {
+      limitCharacters(nickname, NICKNAME_LIMIT, nicknameCount);
     }
-    setupCharacterLimit(nickname, NICKNAME_LIMIT, "nickname");
-    setupCharacterLimit(question, QUESTION_LIMIT, "question");
+    function handleQuestionInput() {
+      limitCharacters(question, QUESTION_LIMIT, questionCount);
+    }
+    // 入力・貼り付け・日本語変換後も上限を適用
+    nickname.addEventListener("input", handleNicknameInput);
+    question.addEventListener("input", handleQuestionInput);
+    nickname.addEventListener("compositionend", handleNicknameInput);
+    question.addEventListener("compositionend", handleQuestionInput);
+    nickname.addEventListener("paste", () => {
+      requestAnimationFrame(handleNicknameInput);
+    });
+    question.addEventListener("paste", () => {
+      requestAnimationFrame(handleQuestionInput);
+    });
     function stopCamera() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -261,58 +260,83 @@
     }
     function updateZoom() {
       video.style.transform = `scale(${zoomLevel})`;
-      zoomLabel.textContent = `${zoomLevel.toFixed(2).replace(/0$/, "").replace(/\.$/, "")}x`;
+      zoomLabel.textContent = `${Number(zoomLevel.toFixed(2))}x`;
       zoomOut.disabled = zoomLevel <= MIN_ZOOM;
       zoomIn.disabled = zoomLevel >= MAX_ZOOM;
     }
     function changeZoom(amount) {
       zoomLevel = Math.max(
         MIN_ZOOM,
-        Math.min(MAX_ZOOM, Math.round((zoomLevel + amount) * 100) / 100)
+        Math.min(
+          MAX_ZOOM,
+          Math.round((zoomLevel + amount) * 100) / 100
+        )
       );
       updateZoom();
     }
-    zoomIn.addEventListener("click", () => {
-      changeZoom(ZOOM_STEP);
-    });
-    zoomOut.addEventListener("click", () => {
-      changeZoom(-ZOOM_STEP);
-    });
+    zoomIn.addEventListener("click", () => changeZoom(ZOOM_STEP));
+    zoomOut.addEventListener("click", () => changeZoom(-ZOOM_STEP));
+    // 1回目でカメラ起動、起動中にもう1回押すと終了
     start.addEventListener("click", async () => {
-      try {
-        status.textContent = "";
-        if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error("カメラを利用できません。HTTPSで開いてください。");
-        }
+      if (cameraStarting) return;
+      status.textContent = "";
+      if (stream) {
         stopCamera();
-        clearPreview();
-        photo = null;
-        zoomLevel = 1;
-        updateZoom();
-        send.disabled = true;
+        cameraFrame.style.display = "none";
+        zoomControls.style.display = "none";
         take.hidden = true;
-        retake.hidden = true;
+        start.textContent = "📸 写真を撮る";
+        return;
+      }
+      clearPreview();
+      photo = null;
+      zoomLevel = 1;
+      updateZoom();
+      send.disabled = true;
+      take.hidden = true;
+      retake.hidden = true;
+      if (!navigator.mediaDevices ||
+          !navigator.mediaDevices.getUserMedia) {
+        status.textContent =
+          "カメラを利用できません。HTTPSのサイトで開いてください。";
+        return;
+      }
+      cameraStarting = true;
+      start.disabled = true;
+      try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: "environment" }
-          },
+          video: { facingMode: { ideal: "environment" } },
           audio: false
         });
         video.srcObject = stream;
         cameraFrame.style.display = "block";
         zoomControls.style.display = "grid";
-        take.hidden = false;
         await video.play();
+        take.hidden = false;
+        start.textContent = "📸 カメラを閉じる";
       } catch (error) {
         stopCamera();
         cameraFrame.style.display = "none";
         zoomControls.style.display = "none";
-        status.textContent = "";
+        take.hidden = true;
+        start.textContent = "📸 写真を撮る";
+        if (error.name === "NotAllowedError") {
+          status.textContent = "カメラの使用を許可してください。";
+        } else if (error.name === "NotFoundError") {
+          status.textContent = "利用できるカメラが見つかりません。";
+        } else {
+          status.textContent =
+            "カメラを起動できませんでした。HTTPS設定とカメラの許可を確認してください。";
+        }
+      } finally {
+        cameraStarting = false;
+        start.disabled = false;
       }
     });
+    // 写真撮影
     take.addEventListener("click", () => {
       if (!video.videoWidth || !video.videoHeight) {
-        status.textContent = "";
+        status.textContent = "カメラの準備ができていません。";
         return;
       }
       const sourceWidth = video.videoWidth / zoomLevel;
@@ -335,7 +359,7 @@
       );
       canvas.toBlob(blob => {
         if (!blob) {
-          status.textContent = "";
+          status.textContent = "写真を撮影できませんでした。";
           return;
         }
         photo = blob;
@@ -349,9 +373,11 @@
         retake.hidden = false;
         send.disabled = false;
         stopCamera();
+        start.textContent = "📸 写真を撮る";
         status.textContent = "";
       }, "image/jpeg", 0.9);
     });
+    // 撮り直し
     retake.addEventListener("click", () => {
       photo = null;
       send.disabled = true;
@@ -359,11 +385,12 @@
       clearPreview();
       start.click();
     });
+    // Telegram送信
     send.addEventListener("click", async () => {
-      limitCharacters(nickname, NICKNAME_LIMIT);
-      limitCharacters(question, QUESTION_LIMIT);
+      handleNicknameInput();
+      handleQuestionInput();
       if (!photo) {
-        status.textContent = "";
+        status.textContent = "先に手の写真を撮影してください。";
         return;
       }
       send.disabled = true;
@@ -386,12 +413,15 @@
         if (!response.ok) {
           throw new Error(result.error || "送信に失敗しました。");
         }
-        status.textContent = "";
+        status.textContent = "送信しました。";
       } catch (error) {
-        status.textContent = "";
+        status.textContent =
+          "送信できませんでした。Telegram送信用のサーバー設定を確認してください。";
         send.disabled = false;
       }
     });
+    handleNicknameInput();
+    handleQuestionInput();
     updateZoom();
     window.addEventListener("pagehide", stopCamera);
   </script>
