@@ -1,5 +1,5 @@
+```html
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -111,7 +111,6 @@
       clear: both;
     }
   </style>
-
 </head>
 
 <body>
@@ -119,33 +118,40 @@
     <div class="logo">PALM GOLD</div>
     <h1>Your Hands.<br>Your Story.</h1>
 
-```
-<section class="card">
-  <h2>手相占いする</h2>
+    <section class="card">
+      <h2>手相占いする</h2>
 
-  <button id="start" type="button">📷 手相を占う</button>
+      <button id="start" type="button">📷 手相を占う</button>
 
-  <video id="video" autoplay playsinline></video>
-  <canvas id="canvas" hidden></canvas>
-  <img id="preview" alt="撮影した手の写真">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas" hidden></canvas>
+      <img id="preview" alt="撮影した手の写真">
 
-  <button id="take" type="button" hidden>写真を撮る</button>
-  <button id="retake" type="button" hidden>撮り直す</button>
+      <button id="take" type="button" hidden>写真を撮る</button>
+      <button id="retake" type="button" hidden>撮り直す</button>
 
-  <label for="nickname">ニックネーム（10字以内）</label>
-  <input id="nickname" type="text" maxlength="10" placeholder="ニックネームを入力">
+      <label for="nickname">ニックネーム（10字以内）</label>
+      <input
+        id="nickname"
+        type="text"
+        maxlength="10"
+        placeholder="ニックネームを入力"
+      >
 
-  <label for="question">相談内容（100字以内）</label>
-  <textarea id="question" rows="3" maxlength="100" placeholder="相談内容を入力"></textarea>
+      <label for="question">相談内容（100字以内）</label>
+      <textarea
+        id="question"
+        rows="3"
+        maxlength="100"
+        placeholder="相談内容を入力"
+      ></textarea>
 
-  <button id="send" type="button" disabled>Telegramに送信する →</button>
+      <button id="send" type="button" disabled>Telegramに送信する →</button>
 
-  <div id="status" role="status" aria-live="polite"></div>
-</section>
+      <div id="status" role="status" aria-live="polite"></div>
+    </section>
 
-<footer>PALM GOLD · YOUR STORY</footer>
-```
-
+    <footer>PALM GOLD · YOUR STORY</footer>
   </main>
 
   <script>
@@ -163,6 +169,19 @@
     let stream = null;
     let photo = null;
     let previewUrl = null;
+
+    // 文字数制限
+    nickname.addEventListener("input", () => {
+      if (nickname.value.length > 10) {
+        nickname.value = nickname.value.slice(0, 10);
+      }
+    });
+
+    question.addEventListener("input", () => {
+      if (question.value.length > 100) {
+        question.value = question.value.slice(0, 100);
+      }
+    });
 
     function stopCamera() {
       if (stream) {
@@ -217,6 +236,7 @@
 
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
+
       canvas.getContext("2d").drawImage(
         video, 0, 0, canvas.width, canvas.height
       );
@@ -229,13 +249,16 @@
 
         photo = blob;
         clearPreview();
+
         previewUrl = URL.createObjectURL(blob);
         preview.src = previewUrl;
         preview.style.display = "block";
+
         video.style.display = "none";
         take.hidden = true;
         retake.hidden = false;
         send.disabled = false;
+
         stopCamera();
         status.textContent = "";
       }, "image/jpeg", 0.9);
@@ -256,13 +279,11 @@
       }
 
       if (nickname.value.length > 10) {
-        status.textContent = "ニックネームは10字以内にしてください。";
-        return;
+        nickname.value = nickname.value.slice(0, 10);
       }
 
       if (question.value.length > 100) {
-        status.textContent = "相談内容は100字以内にしてください。";
-        return;
+        question.value = question.value.slice(0, 100);
       }
 
       send.disabled = true;
@@ -294,6 +315,6 @@
 
     window.addEventListener("pagehide", stopCamera);
   </script>
-
 </body>
 </html>
+```
