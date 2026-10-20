@@ -1,336 +1,620 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b0b0b">
-  <title>PALM GOLD</title>
+  <title>手相占い</title>
+
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      color-scheme: dark;
+      --gold: #d6b66c;
+      --bg: #0b0b0b;
+      --panel: #151515;
+      --text: #f5f0e5;
+      --muted: #aaa397;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      padding: 20px 20px 40px;
-      background: #0b0b0b;
-      color: #f5e8c8;
-      font-family: Arial, sans-serif;
-      text-align: center;
+      min-height: 100vh;
+      padding: 24px 16px 40px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont,
+        "Helvetica Neue", "Noto Sans JP", sans-serif;
     }
+
     .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding-bottom: 20px;
-    }
-    .logo {
-      color: #d8b56a;
-      letter-spacing: 5px;
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 25px;
-    }
-    h1 {
-      margin-top: 55px;
-      font-family: Georgia, serif;
-      font-size: clamp(35px, 8vw, 52px);
-      color: #e2c27b;
-    }
-    button {
       width: 100%;
-      padding: 16px;
-      margin-top: 15px;
-      border: 1px solid #d8b56a;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #f0d99a, #bd9143);
-      color: #111;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
+      max-width: 480px;
+      margin: 0 auto;
     }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+
+    header {
+      text-align: center;
+      padding: 24px 0;
     }
-    .card {
-      margin-top: 35px;
-      padding: 22px;
-      border: 1px solid #594725;
+
+    .symbol {
+      color: var(--gold);
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: .12em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid #353027;
       border-radius: 18px;
-      background: #151515;
+      padding: 18px;
+      margin-top: 18px;
     }
-    .camera-frame {
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 14px;
+      color: var(--gold);
+    }
+
+    #cameraFrame {
       display: none;
       width: 100%;
-      margin-top: 20px;
+      aspect-ratio: 3 / 4;
+      position: relative;
       overflow: hidden;
       border-radius: 12px;
-      background: #000;
+      background: #050505;
     }
+
     #video {
       display: block;
       width: 100%;
-      height: auto;
-      background: #000;
+      height: 100%;
+      object-fit: contain;
+      background: #050505;
     }
+
     #preview {
       display: none;
       width: 100%;
-      margin-top: 20px;
+      aspect-ratio: 3 / 4;
+      object-fit: contain;
+      background: #050505;
       border-radius: 12px;
-      background: #000;
     }
-    input, textarea {
-      display: block;
+
+    #canvas {
+      display: none;
+    }
+
+    .camera-guide {
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.8;
+      margin: 12px 0;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--gold);
+      border-radius: 12px;
+      padding: 14px 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+
+    button:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      color: #17130a;
+      background: var(--gold);
+    }
+
+    .secondary {
+      color: var(--gold);
+      background: transparent;
+    }
+
+    .full {
       width: 100%;
       margin-top: 12px;
-      padding: 13px;
-      background: #090909;
-      border: 1px solid #594725;
-      border-radius: 8px;
-      color: white;
-      font-size: 15px;
-      font-family: Arial, sans-serif;
     }
-    textarea {
-      resize: none;
-      overflow-y: auto;
+
+    .field {
+      margin-top: 18px;
     }
+
     label {
       display: block;
-      text-align: left;
-      margin-top: 20px;
-      color: #d8b56a;
-      font-size: 13px;
+      font-size: 14px;
+      margin-bottom: 8px;
     }
-    .character-count {
-      margin-top: 6px;
-      color: #a99a7d;
-      font-size: 12px;
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid #474138;
+      border-radius: 10px;
+      padding: 12px;
+      background: #0c0c0c;
+      color: var(--text);
+      font: inherit;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--gold);
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .counter {
       text-align: right;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
     }
+
     #status {
-      margin-top: 15px;
-      color: #d8b56a;
+      min-height: 24px;
+      margin: 14px 0 0;
       font-size: 13px;
       line-height: 1.7;
-      white-space: pre-wrap;
+      color: var(--gold);
+      overflow-wrap: anywhere;
     }
-    footer {
-      margin-top: 45px;
-      padding: 15px 0 10px;
-      color: #756b58;
-      font-size: 11px;
+
+    .note {
+      color: var(--muted);
+      font-size: 12px;
       line-height: 1.8;
+      margin-top: 14px;
+    }
+
+    footer {
+      text-align: center;
+      color: #777;
+      font-size: 11px;
+      margin-top: 28px;
     }
   </style>
 </head>
+
 <body>
   <main class="container">
-    <div class="logo">PALM GOLD</div>
-    <h1>Your Hands.<br>Your Story.</h1>
-    <section class="card">
-      <h2>手相占いする</h2>
-      <button id="start" type="button">📸 カメラ起動</button>
-      <div class="camera-frame" id="cameraFrame">
-        <video id="video" autoplay playsinline></video>
+    <header>
+      <div class="symbol">✧</div>
+      <h1>手相占い</h1>
+      <p class="subtitle">手のひらから、自分を知るきっかけを。</p>
+    </header>
+
+    <section class="panel">
+      <h2 class="section-title">01　手のひらを撮影</h2>
+
+      <div id="cameraFrame">
+        <video
+          id="video"
+          autoplay
+          muted
+          playsinline
+        ></video>
       </div>
-      <canvas id="canvas" hidden></canvas>
-      <img id="preview" alt="撮影した手の写真">
-      <button id="take" type="button" hidden>写真を撮る</button>
-      <button id="retake" type="button" hidden>撮り直す</button>
-      <label for="nickname">ニックネーム（10字以内）</label>
-      <input
-        id="nickname"
-        type="text"
-        maxlength="10"
-        autocomplete="off"
-        placeholder="ニックネームを入力"
+
+      <img
+        id="preview"
+        alt="撮影した手のひら"
       >
-      <div class="character-count" id="nicknameCount">0 / 10</div>
-      <label for="question">相談内容（100字以内）</label>
-      <textarea
-        id="question"
-        rows="3"
-        maxlength="100"
-        placeholder="相談内容を入力"
-      ></textarea>
-      <div class="character-count" id="questionCount">0 / 100</div>
-      <button id="send" type="button" disabled>送信</button>
-      <div id="status" role="status" aria-live="polite"></div>
+
+      <canvas id="canvas"></canvas>
+
+      <p class="camera-guide">
+        明るい場所で、手のひら全体が入るように撮影してください。
+      </p>
+
+      <button id="start" class="primary full" type="button">
+        カメラを起動
+      </button>
+
+      <div class="buttons">
+        <button id="take" class="primary" type="button" hidden disabled>
+          写真を撮る
+        </button>
+
+        <button id="retake" class="secondary" type="button" hidden>
+          撮り直す
+        </button>
+      </div>
+
+      <p id="status" role="status" aria-live="polite"></p>
     </section>
-    <footer>PALM GOLD · YOUR STORY</footer>
+
+    <section class="panel">
+      <h2 class="section-title">02　相談内容</h2>
+
+      <div class="field">
+        <label for="nickname">ニックネーム（10字以内）</label>
+        <input
+          id="nickname"
+          type="text"
+          maxlength="10"
+          placeholder="ニックネーム"
+          autocomplete="nickname"
+        >
+        <div id="nicknameCount" class="counter">0 / 10</div>
+      </div>
+
+      <div class="field">
+        <label for="question">相談内容（100字以内）</label>
+        <textarea
+          id="question"
+          maxlength="100"
+          placeholder="占ってほしいことを入力してください"
+        ></textarea>
+        <div id="questionCount" class="counter">0 / 100</div>
+      </div>
+
+      <button id="send" class="primary full" type="button" disabled>
+        手相占いを申し込む
+      </button>
+
+      <p class="note">
+        撮影した写真と入力内容を送信します。送信先のサーバー設定が必要です。
+      </p>
+    </section>
+
+    <footer>
+      © 手相占い
+    </footer>
   </main>
+
   <script>
-    const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const preview = document.getElementById("preview");
-    const cameraFrame = document.getElementById("cameraFrame");
-    const start = document.getElementById("start");
-    const take = document.getElementById("take");
-    const retake = document.getElementById("retake");
-    const send = document.getElementById("send");
-    const status = document.getElementById("status");
-    const nickname = document.getElementById("nickname");
-    const question = document.getElementById("question");
-    const nicknameCount = document.getElementById("nicknameCount");
-    const questionCount = document.getElementById("questionCount");
-    let stream = null;
-    let photo = null;
-    let previewUrl = null;
-    let cameraStarting = false;
-    function limitCharacters(input, maxLength, counter) {
-      const chars = Array.from(input.value);
-      if (chars.length > maxLength) {
-        const limitedValue = chars.slice(0, maxLength).join("");
-        input.value = limitedValue;
+    (() => {
+      const $ = id => document.getElementById(id);
+
+      const video = $("video");
+      const canvas = $("canvas");
+      const preview = $("preview");
+      const cameraFrame = $("cameraFrame");
+      const start = $("start");
+      const take = $("take");
+      const retake = $("retake");
+      const send = $("send");
+      const status = $("status");
+      const nickname = $("nickname");
+      const question = $("question");
+      const nicknameCount = $("nicknameCount");
+      const questionCount = $("questionCount");
+
+      let stream = null;
+      let photo = null;
+      let previewUrl = null;
+      let cameraStarting = false;
+      let takingPhoto = false;
+      let sending = false;
+      let generation = 0;
+
+      function updateCount(input, counter, max) {
+        const chars = Array.from(input.value);
+        if (chars.length > max) {
+          input.value = chars.slice(0, max).join("");
+        }
+        counter.textContent =
+          `${Array.from(input.value).length} / ${max}`;
       }
-      counter.textContent =
-        `${Array.from(input.value).length} / ${maxLength}`;
-    }
-    function handleNicknameInput() {
-      limitCharacters(nickname, 10, nicknameCount);
-    }
-    function handleQuestionInput() {
-      limitCharacters(question, 100, questionCount);
-    }
-    nickname.addEventListener("input", handleNicknameInput);
-    question.addEventListener("input", handleQuestionInput);
-    nickname.addEventListener("compositionend", handleNicknameInput);
-    question.addEventListener("compositionend", handleQuestionInput);
-    function stopCamera() {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
+
+      nickname.addEventListener("input", () =>
+        updateCount(nickname, nicknameCount, 10)
+      );
+      question.addEventListener("input", () =>
+        updateCount(question, questionCount, 100)
+      );
+
+      function clearPreview() {
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          previewUrl = null;
+        }
+        preview.removeAttribute("src");
+        preview.style.display = "none";
       }
-      video.srcObject = null;
-    }
-    function clearPreview() {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-        previewUrl = null;
+
+      function stopCamera() {
+        generation++;
+
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+          stream = null;
+        }
+
+        video.pause();
+        video.srcObject = null;
+        take.disabled = true;
       }
-      preview.removeAttribute("src");
-      preview.style.display = "none";
-    }
-    // カメラを1つだけ起動する
-    start.addEventListener("click", async () => {
-      // 起動中・起動済み・撮影済みなら何もしない
-      if (stream || cameraStarting || photo) return;
-      status.textContent = "";
-      if (!navigator.mediaDevices ||
-          !navigator.mediaDevices.getUserMedia) {
-        status.textContent =
-          "カメラを利用できません。HTTPSのサイトで開いてください。";
-        return;
-      }
-      cameraStarting = true;
-      start.disabled = true;
-      let newStream = null;
-      try {
-        newStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
-          audio: false
+
+      function waitForVideoFrame() {
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+          return Promise.resolve();
+        }
+
+        return new Promise((resolve, reject) => {
+          const timer = setTimeout(() => {
+            cleanup();
+            reject(new Error("video-timeout"));
+          }, 7000);
+
+          function check() {
+            if (video.videoWidth > 0 && video.videoHeight > 0) {
+              cleanup();
+              resolve();
+            }
+          }
+
+          function cleanup() {
+            clearTimeout(timer);
+            video.removeEventListener("loadeddata", check);
+            video.removeEventListener("playing", check);
+          }
+
+          video.addEventListener("loadeddata", check);
+          video.addEventListener("playing", check);
+          check();
         });
-        // 起動処理中に撮影済みになった場合は新しいカメラを閉じる
-        if (photo) {
-          newStream.getTracks().forEach(track => track.stop());
+      }
+
+      async function startCamera() {
+        if (stream || cameraStarting || takingPhoto || sending || photo) {
           return;
         }
-        stream = newStream;
-        video.srcObject = stream;
-        cameraFrame.style.display = "block";
-        await video.play();
-        take.hidden = false;
-      } catch (error) {
-        if (newStream) {
-          newStream.getTracks().forEach(track => track.stop());
-        }
-        stopCamera();
-        cameraFrame.style.display = "none";
-        status.textContent =
-          error.name === "NotAllowedError"
-            ? "カメラの使用を許可してください。"
-            : "カメラを起動できませんでした。HTTPS設定とカメラの許可を確認してください。";
-      } finally {
-        cameraStarting = false;
-        start.disabled = false;
-      }
-    });
-    // 写真を撮影したらカメラを停止
-    take.addEventListener("click", () => {
-      if (!stream || !video.videoWidth || !video.videoHeight) {
-        status.textContent = "カメラの準備ができていません。";
-        return;
-      }
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const context = canvas.getContext("2d");
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      take.disabled = true;
-      canvas.toBlob(blob => {
-        take.disabled = false;
-        if (!blob) {
-          status.textContent = "写真を撮影できませんでした。";
+
+        if (!navigator.mediaDevices?.getUserMedia) {
+          status.textContent =
+            "カメラを利用できません。HTTPSのサイトで開いてください。";
           return;
         }
-        photo = blob;
-        clearPreview();
-        previewUrl = URL.createObjectURL(blob);
-        preview.src = previewUrl;
-        preview.style.display = "block";
-        cameraFrame.style.display = "none";
-        take.hidden = true;
-        retake.hidden = false;
-        send.disabled = false;
-        stopCamera();
-        status.textContent = "";
-      }, "image/jpeg", 0.9);
-    });
-    // 撮り直すときだけ、写真を解除してカメラを再起動
-    retake.addEventListener("click", () => {
-      if (cameraStarting) return;
-      photo = null;
-      send.disabled = true;
-      retake.hidden = true;
-      clearPreview();
-      start.click();
-    });
-    // 送信
-    send.addEventListener("click", async () => {
-      handleNicknameInput();
-      handleQuestionInput();
-      if (!photo) {
-        status.textContent = "先に手の写真を撮影してください。";
-        return;
-      }
-      send.disabled = true;
-      status.textContent = "";
-      const form = new FormData();
-      form.append("photo", photo, "palm.jpg");
-      form.append("nickname", nickname.value);
-      form.append("question", question.value);
-      try {
-        const response = await fetch("/api/send", {
-          method: "POST",
-          body: form
-        });
-        let result = {};
+
+        cameraStarting = true;
+        start.disabled = true;
+        take.disabled = true;
+
+        const myGeneration = ++generation;
+        let newStream = null;
+
+        status.textContent = "カメラを起動しています...";
+
         try {
-          result = await response.json();
+          newStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" } },
+            audio: false
+          });
+
+          if (myGeneration !== generation) {
+            newStream.getTracks().forEach(track => track.stop());
+            return;
+          }
+
+          stream = newStream;
+          video.srcObject = newStream;
+
+          cameraFrame.style.display = "block";
+          preview.style.display = "none";
+
+          await video.play();
+          await waitForVideoFrame();
+
+          if (myGeneration !== generation || stream !== newStream) {
+            return;
+          }
+
+          take.hidden = false;
+          take.disabled = false;
+          status.textContent =
+            "手のひらを合わせて撮影してください。";
         } catch (error) {
-          result = {};
+          if (newStream) {
+            newStream.getTracks().forEach(track => track.stop());
+          }
+
+          if (myGeneration === generation) {
+            stream = null;
+            video.pause();
+            video.srcObject = null;
+            cameraFrame.style.display = "none";
+            take.disabled = true;
+            status.textContent =
+              "カメラを起動できませんでした。カメラの許可を確認してください。";
+          }
+        } finally {
+          cameraStarting = false;
+          start.disabled = false;
         }
-        if (!response.ok) {
-          throw new Error(result.error || "送信に失敗しました。");
-        }
-        status.textContent = "送信しました。";
-      } catch (error) {
-        status.textContent =
-          "送信できませんでした。Telegram送信用のサーバー設定を確認してください。";
-        send.disabled = false;
       }
-    });
-    handleNicknameInput();
-    handleQuestionInput();
-    window.addEventListener("pagehide", stopCamera);
+
+      start.addEventListener("click", startCamera);
+
+      take.addEventListener("click", async () => {
+        if (
+          takingPhoto || cameraStarting || !stream ||
+          !stream.active || !video.videoWidth || !video.videoHeight
+        ) return;
+
+        takingPhoto = true;
+        take.disabled = true;
+        status.textContent = "撮影中...";
+
+        const activeStream = stream;
+
+        try {
+          const width = video.videoWidth;
+          const height = video.videoHeight;
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const context = canvas.getContext("2d", { alpha: false });
+          if (!context) throw new Error("canvas");
+
+          // 元のカメラ表示には触れず、映像を別のcanvasにコピー
+          context.drawImage(video, 0, 0, width, height);
+
+          const blob = await new Promise((resolve, reject) => {
+            canvas.toBlob(
+              result => result
+                ? resolve(result)
+                : reject(new Error("photo-encode")),
+              "image/jpeg",
+              0.95
+            );
+          });
+
+          if (stream !== activeStream || !activeStream.active) {
+            throw new Error("camera-changed");
+          }
+
+          photo = blob;
+          clearPreview();
+
+          previewUrl = URL.createObjectURL(blob);
+          preview.src = previewUrl;
+
+          // 同じ3:4の枠を維持し、切り替え時の縮みを防ぐ
+          preview.style.display = "block";
+          cameraFrame.style.display = "none";
+
+          take.hidden = true;
+          retake.hidden = false;
+          send.disabled = false;
+
+          stopCamera();
+
+          status.textContent =
+            "撮影できました。写真を確認してください。";
+        } catch (error) {
+          take.disabled = false;
+          status.textContent =
+            "撮影できませんでした。もう一度お試しください。";
+        } finally {
+          takingPhoto = false;
+        }
+      });
+
+      retake.addEventListener("click", async () => {
+        if (cameraStarting || takingPhoto || sending) return;
+
+        photo = null;
+        clearPreview();
+
+        preview.style.display = "none";
+        cameraFrame.style.display = "block";
+
+        retake.hidden = true;
+        take.hidden = false;
+        take.disabled = true;
+        send.disabled = true;
+
+        // 動作中のカメラがあればそのまま使う
+        if (
+          stream &&
+          stream.active &&
+          video.srcObject === stream &&
+          video.videoWidth > 0
+        ) {
+          take.disabled = false;
+          status.textContent =
+            "手のひらを合わせて撮影してください。";
+          return;
+        }
+
+        status.textContent = "";
+        await startCamera();
+      });
+
+      send.addEventListener("click", async () => {
+        if (sending || takingPhoto || !photo) return;
+
+        updateCount(nickname, nicknameCount, 10);
+        updateCount(question, questionCount, 100);
+
+        sending = true;
+        send.disabled = true;
+        retake.disabled = true;
+        status.textContent = "送信中...";
+
+        const form = new FormData();
+        form.append("photo", photo, "palm.jpg");
+        form.append("nickname", nickname.value);
+        form.append("question", question.value);
+
+        try {
+          const response = await fetch("/api/send", {
+            method: "POST",
+            body: form
+          });
+
+          let result = {};
+          try {
+            result = await response.json();
+          } catch (_) {}
+
+          if (!response.ok || result.ok === false) {
+            throw new Error("send-failed");
+          }
+
+          status.textContent = "送信しました。";
+        } catch (error) {
+          status.textContent =
+            "送信できませんでした。サーバーの設定を確認してください。";
+          send.disabled = false;
+        } finally {
+          sending = false;
+          retake.disabled = false;
+        }
+      });
+
+      updateCount(nickname, nicknameCount, 10);
+      updateCount(question, questionCount, 100);
+
+      window.addEventListener("pagehide", () => {
+        stopCamera();
+        clearPreview();
+      });
+    })();
   </script>
 </body>
 </html>
