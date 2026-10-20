@@ -70,7 +70,6 @@
       height: auto;
       margin: 0;
       background: #000;
-      transform-origin: center center;
     }
     #preview {
       display: none;
@@ -78,23 +77,6 @@
       margin-top: 20px;
       border-radius: 12px;
       background: #000;
-    }
-    .zoom-controls {
-      display: none;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      align-items: center;
-      margin-top: 12px;
-    }
-    .zoom-controls button {
-      margin-top: 0;
-      padding: 12px 8px;
-      font-size: 15px;
-    }
-    .zoom-label {
-      color: #d8b56a;
-      font-size: 13px;
-      white-space: nowrap;
     }
     input, textarea {
       display: block;
@@ -148,14 +130,9 @@
     <h1>Your Hands.<br>Your Story.</h1>
     <section class="card">
       <h2>手相占いする</h2>
-      <button id="start" type="button">📸 写真を撮る</button>
+      <button id="start" type="button">📸 カメラ起動</button>
       <div class="camera-frame" id="cameraFrame">
         <video id="video" autoplay playsinline></video>
-      </div>
-      <div class="zoom-controls" id="zoomControls">
-        <button id="zoomOut" type="button">− 縮小</button>
-        <span class="zoom-label" id="zoomLabel">1x</span>
-        <button id="zoomIn" type="button">＋ 拡大</button>
       </div>
       <canvas id="canvas" hidden></canvas>
       <img id="preview" alt="撮影した手の写真">
@@ -178,7 +155,7 @@
         placeholder="相談内容を入力"
       ></textarea>
       <div class="character-count" id="questionCount">0 / 100</div>
-      <button id="send" type="button" disabled>Telegramに送信する →</button>
+      <button id="send" type="button" disabled>送信</button>
       <div id="status" role="status" aria-live="polite"></div>
     </section>
     <footer>PALM GOLD · YOUR STORY</footer>
@@ -188,8 +165,6 @@
     const canvas = document.getElementById("canvas");
     const preview = document.getElementById("preview");
     const cameraFrame = document.getElementById("cameraFrame");
-    const zoomControls = document.getElementById("zoomControls");
-    const zoomLabel = document.getElementById("zoomLabel");
     const start = document.getElementById("start");
     const take = document.getElementById("take");
     const retake = document.getElementById("retake");
@@ -199,19 +174,12 @@
     const question = document.getElementById("question");
     const nicknameCount = document.getElementById("nicknameCount");
     const questionCount = document.getElementById("questionCount");
-    const zoomIn = document.getElementById("zoomIn");
-    const zoomOut = document.getElementById("zoomOut");
     const NICKNAME_LIMIT = 10;
     const QUESTION_LIMIT = 100;
-    const MIN_ZOOM = 1;
-    const MAX_ZOOM = 3;
-    const ZOOM_STEP = 0.25;
     let stream = null;
     let photo = null;
     let previewUrl = null;
-    let zoomLevel = 1;
     let cameraStarting = false;
-    // 文字数制限とカウンター更新
     function limitCharacters(input, maxLength, counter) {
       const chars = Array.from(input.value);
       if (chars.length > maxLength) {
@@ -232,17 +200,10 @@
     function handleQuestionInput() {
       limitCharacters(question, QUESTION_LIMIT, questionCount);
     }
-    // 入力・貼り付け・日本語変換後も上限を適用
     nickname.addEventListener("input", handleNicknameInput);
     question.addEventListener("input", handleQuestionInput);
     nickname.addEventListener("compositionend", handleNicknameInput);
     question.addEventListener("compositionend", handleQuestionInput);
-    nickname.addEventListener("paste", () => {
-      requestAnimationFrame(handleNicknameInput);
-    });
-    question.addEventListener("paste", () => {
-      requestAnimationFrame(handleQuestionInput);
-    });
     function stopCamera() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
@@ -258,43 +219,10 @@
       preview.removeAttribute("src");
       preview.style.display = "none";
     }
-    function updateZoom() {
-      video.style.transform = `scale(${zoomLevel})`;
-      zoomLabel.textContent = `${Number(zoomLevel.toFixed(2))}x`;
-      zoomOut.disabled = zoomLevel <= MIN_ZOOM;
-      zoomIn.disabled = zoomLevel >= MAX_ZOOM;
-    }
-    function changeZoom(amount) {
-      zoomLevel = Math.max(
-        MIN_ZOOM,
-        Math.min(
-          MAX_ZOOM,
-          Math.round((zoomLevel + amount) * 100) / 100
-        )
-      );
-      updateZoom();
-    }
-    zoomIn.addEventListener("click", () => changeZoom(ZOOM_STEP));
-    zoomOut.addEventListener("click", () => changeZoom(-ZOOM_STEP));
-    // 1回目でカメラ起動、起動中にもう1回押すと終了
+    // カメラ起動中に再度押しても何もしない
     start.addEventListener("click", async () => {
-      if (cameraStarting) return;
+      if (stream || cameraStarting) return;
       status.textContent = "";
-      if (stream) {
-        stopCamera();
-        cameraFrame.style.display = "none";
-        zoomControls.style.display = "none";
-        take.hidden = true;
-        start.textContent = "📸 写真を撮る";
-        return;
-      }
-      clearPreview();
-      photo = null;
-      zoomLevel = 1;
-      updateZoom();
-      send.disabled = true;
-      take.hidden = true;
-      retake.hidden = true;
       if (!navigator.mediaDevices ||
           !navigator.mediaDevices.getUserMedia) {
         status.textContent =
@@ -310,24 +238,15 @@
         });
         video.srcObject = stream;
         cameraFrame.style.display = "block";
-        zoomControls.style.display = "grid";
         await video.play();
         take.hidden = false;
-        start.textContent = "📸 カメラを閉じる";
       } catch (error) {
         stopCamera();
         cameraFrame.style.display = "none";
-        zoomControls.style.display = "none";
-        take.hidden = true;
-        start.textContent = "📸 写真を撮る";
-        if (error.name === "NotAllowedError") {
-          status.textContent = "カメラの使用を許可してください。";
-        } else if (error.name === "NotFoundError") {
-          status.textContent = "利用できるカメラが見つかりません。";
-        } else {
-          status.textContent =
-            "カメラを起動できませんでした。HTTPS設定とカメラの許可を確認してください。";
-        }
+        status.textContent =
+          error.name === "NotAllowedError"
+            ? "カメラの使用を許可してください。"
+            : "カメラを起動できませんでした。HTTPS設定とカメラの許可を確認してください。";
       } finally {
         cameraStarting = false;
         start.disabled = false;
@@ -339,24 +258,10 @@
         status.textContent = "カメラの準備ができていません。";
         return;
       }
-      const sourceWidth = video.videoWidth / zoomLevel;
-      const sourceHeight = video.videoHeight / zoomLevel;
-      const sourceX = (video.videoWidth - sourceWidth) / 2;
-      const sourceY = (video.videoHeight - sourceHeight) / 2;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext("2d");
-      context.drawImage(
-        video,
-        sourceX,
-        sourceY,
-        sourceWidth,
-        sourceHeight,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
       canvas.toBlob(blob => {
         if (!blob) {
           status.textContent = "写真を撮影できませんでした。";
@@ -368,12 +273,10 @@
         preview.src = previewUrl;
         preview.style.display = "block";
         cameraFrame.style.display = "none";
-        zoomControls.style.display = "none";
         take.hidden = true;
         retake.hidden = false;
         send.disabled = false;
         stopCamera();
-        start.textContent = "📸 写真を撮る";
         status.textContent = "";
       }, "image/jpeg", 0.9);
     });
@@ -383,7 +286,9 @@
       send.disabled = true;
       retake.hidden = true;
       clearPreview();
-      start.click();
+      if (!stream) {
+        start.click();
+      }
     });
     // Telegram送信
     send.addEventListener("click", async () => {
@@ -422,7 +327,6 @@
     });
     handleNicknameInput();
     handleQuestionInput();
-    updateZoom();
     window.addEventListener("pagehide", stopCamera);
   </script>
 </body>
