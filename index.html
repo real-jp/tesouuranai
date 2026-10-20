@@ -17,9 +17,7 @@
   --muted: #aaa397;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -79,9 +77,7 @@ h1 {
   margin: 12px 0 0;
 }
 
-#cameraFrame {
-  display: none;
-}
+#cameraFrame { display: none; }
 
 #video {
   display: block;
@@ -95,9 +91,7 @@ h1 {
   object-fit: contain;
 }
 
-#canvas {
-  display: none;
-}
+#canvas { display: none; }
 
 button {
   display: block;
@@ -127,13 +121,9 @@ button:disabled {
   background: transparent;
 }
 
-button[hidden] {
-  display: none !important;
-}
+button[hidden] { display: none !important; }
 
-.field {
-  margin-top: 18px;
-}
+.field { margin-top: 18px; }
 
 label {
   display: block;
@@ -155,9 +145,7 @@ textarea {
 }
 
 input:focus,
-textarea:focus {
-  border-color: var(--gold);
-}
+textarea:focus { border-color: var(--gold); }
 
 textarea {
   min-height: 110px;
@@ -173,7 +161,12 @@ textarea {
 
 #status {
   display: none;
+  color: var(--gold);
+  font-size: 14px;
+  margin: 12px 0 0;
 }
+
+#status.visible { display: block; }
 
 footer {
   text-align: center;
@@ -276,13 +269,22 @@ footer {
   let sending = false;
   let generation = 0;
 
+  function showCameraPermissionMessage() {
+    status.textContent = "カメラの使用を許可してください";
+    status.classList.add("visible");
+  }
+
+  function hideStatus() {
+    status.textContent = "";
+    status.classList.remove("visible");
+  }
+
   function updateCount(input, counter, max) {
     const chars = Array.from(input.value);
     if (chars.length > max) {
       input.value = chars.slice(0, max).join("");
     }
-    counter.textContent =
-      `${Array.from(input.value).length} / ${max}`;
+    counter.textContent = `${Array.from(input.value).length} / ${max}`;
   }
 
   nickname.addEventListener("input", () =>
@@ -322,6 +324,7 @@ footer {
 
     return new Promise((resolve, reject) => {
       let done = false;
+      let timer;
 
       const cleanup = () => {
         clearTimeout(timer);
@@ -337,7 +340,7 @@ footer {
         }
       };
 
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         if (done) return;
         done = true;
         cleanup();
@@ -355,7 +358,10 @@ footer {
       return;
     }
 
+    hideStatus();
+
     if (!navigator.mediaDevices?.getUserMedia) {
+      showCameraPermissionMessage();
       return;
     }
 
@@ -399,6 +405,7 @@ footer {
         video.pause();
         video.srcObject = null;
         cameraFrame.style.display = "none";
+        showCameraPermissionMessage();
       }
     } finally {
       cameraStarting = false;
@@ -416,8 +423,6 @@ footer {
 
     takingPhoto = true;
     take.disabled = true;
-
-    const activeStream = stream;
 
     try {
       const width = video.videoWidth;
@@ -441,7 +446,7 @@ footer {
         );
       });
 
-      if (stream !== activeStream || !activeStream.active) {
+      if (!stream || !stream.active) {
         throw new Error("camera-changed");
       }
 
@@ -457,7 +462,7 @@ footer {
       retake.hidden = false;
       send.disabled = false;
 
-      stopCamera();
+      hideStatus();
     } catch (error) {
       take.disabled = false;
     } finally {
@@ -470,6 +475,7 @@ footer {
 
     photo = null;
     clearPreview();
+    hideStatus();
 
     preview.style.display = "none";
     cameraFrame.style.display = "block";
