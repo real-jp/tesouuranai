@@ -120,6 +120,7 @@
 
 <body>
   <main class="container">
+
     <div class="logo">PALM GOLD</div>
 
     <h1>Your Hands.<br>Your Story.</h1>
@@ -148,20 +149,26 @@
         撮り直す
       </button>
 
-      <label for="nickname">ニックネーム（任意）</label>
+      <label for="nickname">
+        ニックネーム（10文字以内・任意）
+      </label>
+
       <input
         id="nickname"
         type="text"
-        maxlength="50"
+        maxlength="10"
         placeholder="ニックネーム"
       >
 
-      <label for="question">相談内容（任意）</label>
+      <label for="question">
+        相談内容（100文字以内・任意）
+      </label>
+
       <textarea
         id="question"
         rows="3"
-        maxlength="1000"
-        placeholder="知りたいことを入力"
+        maxlength="100"
+        placeholder="知りたいことを入力（100文字以内）"
       ></textarea>
 
       <button id="send" type="button" disabled>
@@ -172,6 +179,7 @@
     </section>
 
     <footer>PALM GOLD · YOUR STORY</footer>
+
   </main>
 
   <script>
@@ -183,9 +191,12 @@
     const retake = document.getElementById("retake");
     const send = document.getElementById("send");
     const status = document.getElementById("status");
+    const nickname = document.getElementById("nickname");
+    const question = document.getElementById("question");
 
     let stream = null;
     let photo = null;
+    let previewUrl = null;
 
     function stopCamera() {
       if (stream) {
@@ -194,6 +205,16 @@
       }
 
       video.srcObject = null;
+    }
+
+    function clearPreview() {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+      }
+
+      preview.removeAttribute("src");
+      preview.style.display = "none";
     }
 
     start.addEventListener("click", async () => {
@@ -207,6 +228,11 @@
         }
 
         stopCamera();
+        clearPreview();
+
+        photo = null;
+        send.disabled = true;
+        retake.hidden = true;
 
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -217,19 +243,14 @@
 
         video.srcObject = stream;
         video.style.display = "block";
-        preview.style.display = "none";
-
         take.hidden = false;
-        retake.hidden = true;
-        send.disabled = true;
-
-        photo = null;
 
         status.textContent =
           "手のひら全体が映るようにカメラを向けてください。";
 
       } catch (error) {
         stopCamera();
+
         status.textContent =
           "カメラを起動できませんでした。\n" + error.message;
       }
@@ -259,10 +280,13 @@
         }
 
         photo = blob;
-        preview.src = URL.createObjectURL(blob);
-        preview.style.display = "block";
-        video.style.display = "none";
 
+        clearPreview();
+        previewUrl = URL.createObjectURL(blob);
+        preview.src = previewUrl;
+        preview.style.display = "block";
+
+        video.style.display = "none";
         take.hidden = true;
         retake.hidden = false;
         send.disabled = false;
@@ -276,9 +300,9 @@
 
     retake.addEventListener("click", () => {
       photo = null;
-      preview.style.display = "none";
       send.disabled = true;
       retake.hidden = true;
+      clearPreview();
       start.click();
     });
 
@@ -288,20 +312,24 @@
         return;
       }
 
+      if (nickname.value.length > 10) {
+        status.textContent = "ニックネームは10文字以内にしてください。";
+        return;
+      }
+
+      if (question.value.length > 100) {
+        status.textContent = "相談内容は100文字以内にしてください。";
+        return;
+      }
+
       send.disabled = true;
       status.textContent = "送信しています…";
 
       const form = new FormData();
 
       form.append("photo", photo, "palm.jpg");
-      form.append(
-        "nickname",
-        document.getElementById("nickname").value
-      );
-      form.append(
-        "question",
-        document.getElementById("question").value
-      );
+      form.append("nickname", nickname.value);
+      form.append("question", question.value);
 
       try {
         const response = await fetch("/api/send", {
