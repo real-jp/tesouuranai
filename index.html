@@ -1,5 +1,5 @@
-```html
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -8,13 +8,11 @@
   <title>PALM GOLD</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      padding: 20px;
+      padding: 20px 20px 40px;
       background: #0b0b0b;
       color: #f5e8c8;
       font-family: Arial, sans-serif;
@@ -24,6 +22,7 @@
     .container {
       max-width: 600px;
       margin: 0 auto;
+      padding-bottom: 20px;
     }
 
     .logo {
@@ -67,8 +66,7 @@
       background: #151515;
     }
 
-    video,
-    #preview {
+    video, #preview {
       display: none;
       width: 100%;
       margin-top: 20px;
@@ -76,8 +74,7 @@
       background: #000;
     }
 
-    input,
-    textarea {
+    input, textarea {
       display: block;
       width: 100%;
       margin-top: 12px;
@@ -106,62 +103,49 @@
     }
 
     footer {
-      margin-top: 35px;
+      margin-top: 45px;
+      padding: 15px 0 10px;
       color: #756b58;
       font-size: 11px;
+      line-height: 1.8;
+      clear: both;
     }
   </style>
+
 </head>
 
 <body>
   <main class="container">
     <div class="logo">PALM GOLD</div>
-
     <h1>Your Hands.<br>Your Story.</h1>
 
-    <section class="card">
-      <h2>手相占いする</h2>
+```
+<section class="card">
+  <h2>手相占いする</h2>
 
-      <button id="start" type="button">
-        📷 手相を占う
-      </button>
+  <button id="start" type="button">📷 手相を占う</button>
 
-      <video id="video" autoplay playsinline></video>
-      <canvas id="canvas" hidden></canvas>
-      <img id="preview" alt="撮影した手の写真">
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" hidden></canvas>
+  <img id="preview" alt="撮影した手の写真">
 
-      <button id="take" type="button" hidden>
-        写真を撮る
-      </button>
+  <button id="take" type="button" hidden>写真を撮る</button>
+  <button id="retake" type="button" hidden>撮り直す</button>
 
-      <button id="retake" type="button" hidden>
-        撮り直す
-      </button>
+  <label for="nickname">ニックネーム（10字以内）</label>
+  <input id="nickname" type="text" maxlength="10" placeholder="ニックネームを入力">
 
-      <label for="nickname">ニックネーム（10字以内）</label>
-      <input
-        id="nickname"
-        type="text"
-        maxlength="10"
-        placeholder="ニックネームを入力"
-      >
+  <label for="question">相談内容（100字以内）</label>
+  <textarea id="question" rows="3" maxlength="100" placeholder="相談内容を入力"></textarea>
 
-      <label for="question">相談内容（100字以内）</label>
-      <textarea
-        id="question"
-        rows="3"
-        maxlength="100"
-        placeholder="相談内容を入力"
-      ></textarea>
+  <button id="send" type="button" disabled>Telegramに送信する →</button>
 
-      <button id="send" type="button" disabled>
-        Telegramに送信する →
-      </button>
+  <div id="status" role="status" aria-live="polite"></div>
+</section>
 
-      <div id="status" role="status" aria-live="polite"></div>
-    </section>
+<footer>PALM GOLD · YOUR STORY</footer>
+```
 
-    <footer>PALM GOLD · YOUR STORY</footer>
   </main>
 
   <script>
@@ -185,7 +169,6 @@
         stream.getTracks().forEach(track => track.stop());
         stream = null;
       }
-
       video.srcObject = null;
     }
 
@@ -194,7 +177,6 @@
         URL.revokeObjectURL(previewUrl);
         previewUrl = null;
       }
-
       preview.removeAttribute("src");
       preview.style.display = "none";
     }
@@ -204,31 +186,23 @@
         status.textContent = "";
 
         if (!navigator.mediaDevices?.getUserMedia) {
-          throw new Error(
-            "カメラを使うにはHTTPS対応のサイトで開いてください。"
-          );
+          throw new Error();
         }
 
         stopCamera();
         clearPreview();
-
         photo = null;
         send.disabled = true;
         retake.hidden = true;
 
         stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: "environment" }
-          },
+          video: { facingMode: { ideal: "environment" } },
           audio: false
         });
 
         video.srcObject = stream;
         video.style.display = "block";
         take.hidden = false;
-
-        status.textContent = "";
-
       } catch (error) {
         stopCamera();
         status.textContent = "";
@@ -243,7 +217,6 @@
 
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-
       canvas.getContext("2d").drawImage(
         video, 0, 0, canvas.width, canvas.height
       );
@@ -256,18 +229,14 @@
 
         photo = blob;
         clearPreview();
-
         previewUrl = URL.createObjectURL(blob);
         preview.src = previewUrl;
         preview.style.display = "block";
-
         video.style.display = "none";
         take.hidden = true;
         retake.hidden = false;
         send.disabled = false;
-
         stopCamera();
-
         status.textContent = "";
       }, "image/jpeg", 0.9);
     });
@@ -313,13 +282,10 @@
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(
-            result.error || "送信に失敗しました。"
-          );
+          throw new Error(result.error || "送信に失敗しました。");
         }
 
         status.textContent = "";
-
       } catch (error) {
         status.textContent = "";
         send.disabled = false;
@@ -328,6 +294,6 @@
 
     window.addEventListener("pagehide", stopCamera);
   </script>
+
 </body>
 </html>
-```
